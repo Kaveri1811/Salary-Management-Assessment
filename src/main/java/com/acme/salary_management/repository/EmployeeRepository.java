@@ -1,19 +1,14 @@
+
 package com.acme.salary_management.repository;
 
-import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.acme.salary_management.entity.Employee;
 
-@Repository
-public interface EmployeeRepository extends JpaRepository<Employee, Long> {
-     Optional<Employee> findByEmail(String email);
-
-    Optional<Employee> findByEmployeeCode(String employeeCode);
-
-    boolean existsByEmail(String email);
+public interface EmployeeRepository
+        extends JpaRepository<Employee, Long> {
 
     boolean existsByEmployeeCode(String employeeCode);
+
+    boolean existsByEmail(String email);
 }

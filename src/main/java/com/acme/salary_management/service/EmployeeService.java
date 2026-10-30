@@ -1,60 +1,125 @@
+
 package com.acme.salary_management.service;
 
-
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.acme.salary_management.dto.EmployeeRequest;
+import com.acme.salary_management.entity.Department;
 import com.acme.salary_management.entity.Employee;
+import com.acme.salary_management.repository.DepartmentRepository;
 import com.acme.salary_management.repository.EmployeeRepository;
 
 @Service
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final DepartmentRepository departmentRepository;
 
-    public EmployeeService(EmployeeRepository employeeRepository) {
+    public EmployeeService(
+            EmployeeRepository employeeRepository,
+            DepartmentRepository departmentRepository) {
+
         this.employeeRepository = employeeRepository;
+        this.departmentRepository = departmentRepository;
     }
 
-    // Create Employee
-    public Employee addEmployee(Employee employee) {
+    @Transactional
+    public Employee createEmployee(EmployeeRequest request) {
+
+        if (employeeRepository.existsByEmployeeCode(
+                request.getEmployeeCode())) {
+            throw new IllegalArgumentException(
+                    "Employee code already exists");
+        }
+
+        if (employeeRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException(
+                    "Email already exists");
+        }
+
+        Department department = departmentRepository
+                .findById(request.getDepartmentId())
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Department not found"));
+
+        Employee employee = new Employee();
+
+        employee.setEmployeeCode(request.getEmployeeCode());
+        employee.setFirstName(request.getFirstName());
+        employee.setLastName(request.getLastName());
+        employee.setEmail(request.getEmail());
+        employee.setDepartment(department);
+        employee.setJobTitle(request.getJobTitle());
+        employee.setCountry(request.getCountry());
+        employee.setCurrency(request.getCurrency());
+        employee.setAnnualSalary(request.getAnnualSalary());
+        employee.setEmploymentStatus(request.getEmploymentStatus());
+
         return employeeRepository.save(employee);
     }
 
-    // Get All Employees
-    public List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();
+    public Page<Employee> getAllEmployees(Pageable pageable) {
+    return employeeRepository.findAll(pageable);
+}
+
+public Employee getEmployeeById(Long id) {
+    return employeeRepository.findById(id)
+            .orElseThrow(() ->
+                    new RuntimeException("Employee not found with ID: " + id));
+}
+
+    public Employee updateEmployee(Long id, EmployeeRequest request) {
+
+    Employee employee = employeeRepository.findById(id)
+            .orElseThrow(() ->
+                    new RuntimeException("Employee not found with ID: " + id));
+
+    // Check duplicate employee code
+    if (!employee.getEmployeeCode().equals(request.getEmployeeCode())
+            && employeeRepository.existsByEmployeeCode(request.getEmployeeCode())) {
+        throw new RuntimeException("Employee code already exists");
     }
 
-    // Get Employee By ID
-    public Employee getEmployeeById(Long id) {
-        return employeeRepository.findById(id).orElse(null);
+    // Check duplicate email
+    if (!employee.getEmail().equals(request.getEmail())
+            && employeeRepository.existsByEmail(request.getEmail())) {
+        throw new RuntimeException("Email already exists");
     }
 
-    // Update Employee
-    public Employee updateEmployee(Long id, Employee employee) {
+    Department department = departmentRepository.findById(request.getDepartmentId())
+            .orElseThrow(() ->
+                    new RuntimeException("Department not found"));
 
-        Employee existingEmployee = employeeRepository.findById(id)
-                .orElse(null);
+    employee.setEmployeeCode(request.getEmployeeCode());
+    employee.setFirstName(request.getFirstName());
+    employee.setLastName(request.getLastName());
+    employee.setEmail(request.getEmail());
+    employee.setDepartment(department);
+    employee.setJobTitle(request.getJobTitle());
+    employee.setCountry(request.getCountry());
+    employee.setCurrency(request.getCurrency());
+    employee.setAnnualSalary(request.getAnnualSalary());
+    employee.setEmploymentStatus(request.getEmploymentStatus());
 
-        if (existingEmployee == null) {
-            return null;
-        }
+    return employeeRepository.save(employee);
+}
 
-        existingEmployee.setFirstName(employee.getFirstName());
-        existingEmployee.setLastName(employee.getLastName());
-        existingEmployee.setEmail(employee.getEmail());
-        existingEmployee.setDesignation(employee.getDesignation());
-        existingEmployee.setJoiningDate(employee.getJoiningDate());
-        existingEmployee.setStatus(employee.getStatus());
-        existingEmployee.setDepartment(employee.getDepartment());
+public Employee updateEmployeeStatus(Long id, String status) {
 
-        return employeeRepository.save(existingEmployee);
+    Employee employee = employeeRepository.findById(id)
+            .orElseThrow(() ->
+                    new RuntimeException("Employee not found with ID: " + id));
+
+    if (!status.equals("ACTIVE") && !status.equals("INACTIVE")) {
+        throw new RuntimeException("Status must be ACTIVE or INACTIVE");
     }
 
-    // Delete Employee
-    public void deleteEmployee(Long id) {
-        employeeRepository.deleteById(id);
-    }
+    employee.setEmploymentStatus(status);
+
+    return employeeRepository.save(employee);
+}
 }
