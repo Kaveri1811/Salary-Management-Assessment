@@ -1,6 +1,8 @@
 
 package com.acme.salary_management.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.acme.salary_management.dto.EmployeeRequest;
+import com.acme.salary_management.dto.SalaryRevisionRequest;
 import com.acme.salary_management.entity.Employee;
+import com.acme.salary_management.entity.SalaryHistory;
 import com.acme.salary_management.service.EmployeeService;
 
 import jakarta.validation.Valid;
@@ -97,5 +101,25 @@ public ResponseEntity<Employee> updateEmployeeStatus(
             employeeService.updateEmployeeStatus(id, status);
 
     return ResponseEntity.ok(updatedEmployee);
+}
+
+@PostMapping("/{id}/salary-revisions")
+public ResponseEntity<SalaryHistory> reviseSalary(
+        @PathVariable Long id,
+        @Valid @RequestBody SalaryRevisionRequest request) {
+
+    SalaryHistory history =
+            employeeService.reviseSalary(id, request);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(history);
+}
+
+@GetMapping("/{id}/salary-revisions")
+public ResponseEntity<List<SalaryHistory>> getSalaryHistory(
+        @PathVariable Long id) {
+
+    return ResponseEntity.ok(
+            employeeService.getSalaryHistory(id)
+    );
 }
 }
