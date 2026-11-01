@@ -46,17 +46,31 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public Page<Employee> getAllEmployees(
+public Page<Employee> getAllEmployees(
+
+        @RequestParam(required = false) String search,
+        @RequestParam(required = false) String country,
+        @RequestParam(required = false) Long departmentId,
+        @RequestParam(required = false) String status,
+
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size) {
 
-            Pageable pageable = PageRequest.of(
+    if (page < 0 || size < 1 || size > 100) {
+        throw new IllegalArgumentException(
+                "Page must be >= 0 and size must be between 1 and 100"
+        );
+    }
+
+    Pageable pageable = PageRequest.of(
             page,
             size,
             Sort.by("id").descending()
     );
 
-    return employeeService.getAllEmployees(pageable);
+    return employeeService.getAllEmployees(
+            search, country, departmentId, status, pageable
+    );
 }
 
 @GetMapping("/{id}")
